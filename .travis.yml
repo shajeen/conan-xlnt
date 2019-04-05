@@ -18,9 +18,9 @@ install:
 #    - export CXX="g++-5"
 
 before_script:
-    - conan profile update settings.compiler.libcxx=libstdc++11 default
+    #- conan profile update settings.compiler.libcxx=libstdc++11 default
     - conan remote add bintray_ https://api.bintray.com/conan/bincrafters/public-conan 
     - conan remote add conan1 https://api.bintray.com/conan/conan/conan-transit 
 
 script:
-    - conan create . test/test 
+    - conan create . test/test -s settings.compiler.libcxx=libstdc++11
