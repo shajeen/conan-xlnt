@@ -1,25 +1,52 @@
-dist: xenial
-language: cpp
-compiler: gcc
+linux: &linux
+   os: linux
+   dist: xenial
+   language: python
+   python: "3.7"
+   services:
+     - docker
+osx: &osx
+   os: osx
+   language: generic
+matrix:
+   include:
+      - <<: *linux
+        env: CONAN_GCC_VERSIONS=4.9 CONAN_DOCKER_IMAGE=conanio/gcc49
+      - <<: *linux
+        env: CONAN_GCC_VERSIONS=5 CONAN_DOCKER_IMAGE=conanio/gcc5
+      - <<: *linux
+        env: CONAN_GCC_VERSIONS=6 CONAN_DOCKER_IMAGE=conanio/gcc6
+      - <<: *linux
+        env: CONAN_GCC_VERSIONS=7 CONAN_DOCKER_IMAGE=conanio/gcc7
+      - <<: *linux
+        env: CONAN_GCC_VERSIONS=8 CONAN_DOCKER_IMAGE=conanio/gcc8
+      - <<: *linux
+        env: CONAN_CLANG_VERSIONS=3.9 CONAN_DOCKER_IMAGE=conanio/clang39
+      - <<: *linux
+        env: CONAN_CLANG_VERSIONS=4.0 CONAN_DOCKER_IMAGE=conanio/clang40
+      - <<: *linux
+        env: CONAN_CLANG_VERSIONS=5.0 CONAN_DOCKER_IMAGE=conanio/clang50
+      - <<: *linux
+        env: CONAN_CLANG_VERSIONS=6.0 CONAN_DOCKER_IMAGE=conanio/clang60
+      - <<: *linux
+        env: CONAN_CLANG_VERSIONS=7.0 CONAN_DOCKER_IMAGE=conanio/clang7
+      - <<: *osx
+        osx_image: xcode8.3
+        env: CONAN_APPLE_CLANG_VERSIONS=8.1
+      - <<: *osx
+        osx_image: xcode9
+        env: CONAN_APPLE_CLANG_VERSIONS=9.0
+      - <<: *osx
+        osx_image: xcode9.4
+        env: CONAN_APPLE_CLANG_VERSIONS=9.1
+      - <<: *osx
+        osx_image: xcode10.1
+        env: CONAN_APPLE_CLANG_VERSIONS=10.0
 
 install:
-#    - if [ "$QT_BASE" = "48" ]; then sudo apt-get install -qq opt-qt4-qmake opt-qt4-dev-tools; source /opt/qt-4.8/bin/qt-4.8-env.sh; fi
-#    - if [ "$QT_BASE" = "51" ]; then sudo apt-get install -qq qt51base; source /opt/qt51/bin/qt51-env.sh; fi
-#    - if [ "$QT_BASE" = "52" ]; then sudo apt-get install -qq qt52base; source /opt/qt52/bin/qt52-env.sh; fi
-#    - if [ "$QT_BASE" = "53" ]; then sudo apt-get install -qq qt53base; source /opt/qt53/bin/qt53-env.sh; fi
-#    - if [ "$QT_BASE" = "54" ]; then sudo apt-get install -qq qt54base; source /opt/qt54/bin/qt54-env.sh; fi
-#    - if [ "$QT_BASE" = "55" ]; then sudo apt-get install -qq qt55base; source /opt/qt55/bin/qt55-env.sh; fi
-#    - if [ "$QT_BASE" = "56" ]; then sudo apt-get install -qq qt56base; source /opt/qt56/bin/qt56-env.sh; fi
-#    - if [ "$QT_BASE" = "57" ]; then sudo apt-get install -qq qt57base; source /opt/qt57/bin/qt57-env.sh; fi
-    - sudo apt-get install --yes python python-pip
-#    - sudo pip install --upgrade pip
-    - sudo pip install conan --ignore-installed enum34
-#    - sudo apt-get install -qq g++-5
-#    - export CXX="g++-5"
-
-before_script:
-    - conan remote add bintray_ https://api.bintray.com/conan/bincrafters/public-conan 
-    - conan remote add conan1 https://api.bintray.com/conan/conan/conan-transit 
+  - chmod +x .ci/install.sh
+  - ./.ci/install.sh
 
 script:
-    - conan create . test/test
+  - chmod +x .ci/run.sh
+  - ./.ci/run.sh
