@@ -6,7 +6,7 @@ class XlntConan(ConanFile):
     license = "MIT license"
     description = "xlnt is a modern C++ library for manipulating spreadsheets in memory and reading/writing them from/to XLSX files"
     url = "https://github.com/tfussell/xlnt"
-    settings = "cppstd=14","os", "compiler", "build_type", "arch"
+    settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = {"shared": True}
     generators = "cmake"
