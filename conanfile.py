@@ -32,5 +32,4 @@ class XlntConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["xlnt"]
-        if self.settings.compiler == "gcc":
-            self.cpp_info.cppflags = "-std=c++11"
+        self.cpp_info.cppflags = "-std=c++11"
