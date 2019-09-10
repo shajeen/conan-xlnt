@@ -18,7 +18,7 @@ class XlntConan(ConanFile):
     def build(self):
         cmake = CMake(self)
         cmake.definitions["CMAKE_CXX_FLAGS"] = "-D_GLIBCXX_USE_CXX11_ABI=1"
-        cmake.definitions["CMAKE_CXX_FLAGS"] = "-std=c11"
+        cmake.definitions["CMAKE_CXX_STANDARD "] = "11"
         cmake.configure(source_folder="xlnt")
         cmake.build()
 
