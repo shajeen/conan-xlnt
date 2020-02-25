@@ -3,14 +3,12 @@ import os
 from conans import ConanFile, CMake, tools
 
 
-class XlntTestConan(ConanFile):
+class ExampleConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake"
 
     def build(self):
         cmake = CMake(self)
-        # Current dir is "test_package/build/<build_id>" and CMakeLists.txt is
-        # in "test_package"
         cmake.configure()
         cmake.build()
 
@@ -23,3 +21,7 @@ class XlntTestConan(ConanFile):
         if not tools.cross_building(self.settings):
             os.chdir("bin")
             self.run(".%sexample" % os.sep)
+
+    def configure(self):
+        self.settings.compiler.cppstd = "14"
+
