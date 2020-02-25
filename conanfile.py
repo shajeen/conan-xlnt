@@ -1,4 +1,6 @@
-from conans import ConanFile, CMake
+import os
+import shutil
+from conans import ConanFile, CMake, tools
 
 class XlntConan(ConanFile):
     name = "xlnt"
@@ -8,16 +10,28 @@ class XlntConan(ConanFile):
     url = "https://github.com/tfussell/xlnt"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
-    default_options = {"shared": False}
+    default_options = '''shared=False'''
     generators = "cmake"
 
     def source(self):
-        self.run("git clone https://github.com/tfussell/xlnt.git")
-        self.run("cd xlnt")
+        zip_name = "xlnt.zip"
+        zip_url = "https://github.com/tfussell/xlnt/archive/v%s.zip" % self.version
+        tools.download(zip_url, zip_name)
+        tools.unzip(zip_name)
+        shutil.move("xlnt-%s" % self.version, "xlnt")
+        os.unlink(zip_name)
+
 
     def build(self):
         cmake = CMake(self)
         cmake.definitions["CMAKE_CXX_FLAGS"] = "-D_GLIBCXX_USE_CXX11_ABI=1"
+        for option_name in self.options.values.fields:
+            activated = getattr(self.options, option_name)
+            if option_name == "shared":
+                cmake.definitions["STATIC"] = "OFF" if activated else "ON"
+        self.output.info(cmake.definitions)
+        cmake.configure(source_folder="xlnt")
+        cmake.build()
         cmake.configure(source_folder="xlnt")
         cmake.build()
 
