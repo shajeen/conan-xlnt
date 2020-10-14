@@ -1,5 +1,7 @@
-# conan-xlnt
-A conan wrapper for https://github.com/tfussell/xlnt
+# conan-xlnt 
+![build](https://github.com/CodeAvailable/conan-xlnt/workflows/Python%20application/badge.svg?branch=master)
+
+A conan wrapper for [xlnt](https://github.com/tfussell/xlnt)
 
 ### Build Instructions
 
