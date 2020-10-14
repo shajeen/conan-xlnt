@@ -28,3 +28,6 @@ if you face any issue or need any kind of other help. Please raise a issue.
 ### Contributing
 
 Please join CodeAvailable community or read the [CONTRIBUTING](https://github.com/CodeAvailable/conan-xlnt/blob/master/CONTRIBUTING.md) before raising the PR.
+
+**Package repo support by**
+<a href='https://bintray.com/shajeenahmed/conan/xlnt%3Amaster?source=watch' alt='Get automatic notifications about new "xlnt:master" versions'><img src='https://www.bintray.com/docs/images/bintray_badge_color.png'></a><a href='https://bintray.com/shajeenahmed/conan/xlnt%3Amaster?source=watch' alt='Get automatic notifications about new "xlnt:master" versions'><img src='https://www.bintray.com/docs/images/bintray_badge_color.png'></a>
