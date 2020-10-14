@@ -1,5 +1,6 @@
 # conan-xlnt 
 ![build](https://github.com/CodeAvailable/conan-xlnt/workflows/Python%20application/badge.svg?branch=master)
+[ ![Download](https://api.bintray.com/packages/shajeenahmed/conan/xlnt%3Amaster/images/download.svg) ](https://bintray.com/shajeenahmed/conan/xlnt%3Amaster/_latestVersion)
 
 A conan wrapper for [xlnt](https://github.com/tfussell/xlnt)
 
@@ -30,6 +31,6 @@ if you face any issue or need any kind of other help. Please raise a issue.
 Please join CodeAvailable community or read the [CONTRIBUTING](https://github.com/CodeAvailable/conan-xlnt/blob/master/CONTRIBUTING.md) before raising the PR.
 
 
-#### Package uploaded at [bintray.com](https://bintray.com/)
+#### Package available at [bintray.com](https://bintray.com/shajeenahmed/conan/xlnt%3Amaster)
 
 ![bintray.com](https://www.bintray.com/docs/images/bintray_badge_color.png)
