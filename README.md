@@ -29,6 +29,6 @@ if you face any issue or need any kind of other help. Please raise a issue.
 
 Please join CodeAvailable community or read the [CONTRIBUTING](https://github.com/CodeAvailable/conan-xlnt/blob/master/CONTRIBUTING.md) before raising the PR.
 
-**Package uploaded at,**
+**Package uploaded at bintray.com**
 
 ![bintray.com](https://www.bintray.com/docs/images/bintray_badge_color.png)
