@@ -3,7 +3,7 @@
 [ ![Download](https://api.bintray.com/packages/shajeenahmed/conan/xlnt%3Amaster/images/download.svg) ](https://bintray.com/shajeenahmed/conan/xlnt%3Amaster/_latestVersion)
 [ ![Download](https://api.bintray.com/packages/shajeenahmed/conan/xlnt%3Amaster/images/download.svg?version=1.4.0%3Arelease) ](https://bintray.com/shajeenahmed/conan/xlnt%3Amaster/1.4.0%3Arelease/link)
 
-A conan wrapper for [xlnt](https://github.com/tfussell/xlnt)
+A conan wrapper for xlnt from https://github.com/tfussell/xlnt
 
 ### Build Instructions
 
