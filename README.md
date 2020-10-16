@@ -9,7 +9,7 @@ A conan wrapper for [xlnt](https://github.com/tfussell/xlnt)
 
 Add the Bintray conan repository
 ```bash
-conan remote add shajeen https://api.bintray.com/conan/shajeenahmed/conan 
+conan remote add shajeen https://api.bintray.com/conan/shajeenahmed/conan  
 ```
 
 Install the package
