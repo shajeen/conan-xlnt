@@ -4,7 +4,7 @@ from conans import ConanFile, CMake, tools
 
 class XlntConan(ConanFile):
     name = "xlnt"
-    version = "1.4.0"
+    version = "1.5.0"
     license = "MIT license"
     description = "xlnt is a modern C++ library for manipulating spreadsheets in memory and reading/writing them from/to XLSX files"
     url = "https://github.com/tfussell/xlnt"
