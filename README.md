@@ -2,6 +2,7 @@
 ![build](https://github.com/CodeAvailable/conan-xlnt/workflows/Python%20application/badge.svg?branch=master)
 [ ![Download](https://api.bintray.com/packages/shajeenahmed/conan/xlnt%3Amaster/images/download.svg) ](https://bintray.com/shajeenahmed/conan/xlnt%3Amaster/_latestVersion)
 [ ![Download](https://api.bintray.com/packages/shajeenahmed/conan/xlnt%3Amaster/images/download.svg?version=1.4.0%3Arelease) ](https://bintray.com/shajeenahmed/conan/xlnt%3Amaster/1.4.0%3Arelease/link)
+[ ![Download](https://api.bintray.com/packages/shajeenahmed/conan/xlnt%3Amaster/images/download.svg?version=1.5.0%3Arelease) ](https://bintray.com/shajeenahmed/conan/xlnt%3Amaster/1.5.0%3Arelease/link)
 
 A conan wrapper for xlnt from https://github.com/tfussell/xlnt
 
@@ -23,6 +24,7 @@ Pick one version and add it to your project’s requirements as described in [do
 |:-----|:--------------------:|
 | [v1.3.0](https://github.com/CodeAvailable/conan-xlnt/releases/tag/v1.3.0) | xlnt/1.3.0@master/release |
 | [v1.4.0](https://github.com/CodeAvailable/conan-xlnt/releases/tag/v1.4.0) | xlnt/1.4.0@master/release |
+| [v1.5.0](https://github.com/CodeAvailable/conan-xlnt/releases/tag/v1.5.0) | xlnt/1.5.0@master/release |
 
 
 ### Bug report
