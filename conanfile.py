@@ -24,14 +24,14 @@ class XlntConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
+        if self.settings.build_type == "Debug": 
+            cmake.definitions["CUSTOM_DEBUG_POSTFIX"] = self.settings.build_type
         cmake.definitions["CMAKE_CXX_FLAGS"] = "-D_GLIBCXX_USE_CXX11_ABI=1"
         for option_name in self.options.values.fields:
             activated = getattr(self.options, option_name)
             if option_name == "shared":
                 cmake.definitions["STATIC"] = "OFF" if activated else "ON"
         self.output.info(cmake.definitions)
-        cmake.configure(source_folder="xlnt")
-        cmake.build()
         cmake.configure(source_folder="xlnt")
         cmake.build()
 
@@ -45,4 +45,4 @@ class XlntConan(ConanFile):
         self.copy("*.so", dst="lib", keep_path=False)
 
     def package_info(self):
-        self.cpp_info.libs = ["xlnt"]
+        self.cpp_info.libs = ["xlnt" if self.settings.build_type == "Release" else "xlntd"]
