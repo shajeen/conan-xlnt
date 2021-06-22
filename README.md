@@ -33,7 +33,7 @@ if you face any issue or need any kind of other help. Please raise a issue.
 
 ### Contributing
 
-Please join CodeAvailable community or read the [CONTRIBUTING](https://github.com/CodeAvailable/conan-xlnt/blob/master/CONTRIBUTING.md) before raising the PR.
+Please join CodeAvailable community or read the [CONTRIBUTING](https://github.com/shajeen/conan-xlnt/blob/master/CONTRIBUTING.md) before raising the PR.
 
 
 #### Package available at [bintray.com](https://bintray.com/shajeenahmed/conan/xlnt%3Amaster)
