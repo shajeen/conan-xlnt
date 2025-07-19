@@ -50,7 +50,7 @@ jobs:
         conan create . --build=missing
     - name: Export Conan package
       run: |
-        conan export-pkg . --force -o shared=False
+        conan export-pkg . -o shared=False
     - name: Create package archive
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
