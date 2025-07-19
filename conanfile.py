@@ -1,6 +1,9 @@
 import os
 import shutil
-from conans import ConanFile, CMake, tools
+from conan import ConanFile
+from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.files import download, unzip, copy, rmdir, replace_in_file
+from conan.tools.env import Environment
 
 class XlntConan(ConanFile):
     name = "xlnt"
@@ -10,39 +13,54 @@ class XlntConan(ConanFile):
     url = "https://github.com/tfussell/xlnt"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
-    default_options = '''shared=False'''
-    generators = "cmake"
+    default_options = {"shared": False}
+    generators = "CMakeDeps", "CMakeToolchain"
+
+    def layout(self):
+        cmake_layout(self)
 
     def source(self):
         zip_name = "xlnt.zip"
-        zip_url = "https://github.com/tfussell/xlnt/archive/v%s.zip" % self.version
-        tools.download(zip_url, zip_name)
-        tools.unzip(zip_name)
-        shutil.move("xlnt-%s" % self.version, "xlnt")
+        zip_url = f"https://github.com/tfussell/xlnt/archive/v{self.version}.zip"
+        download(self, zip_url, zip_name)
+        unzip(self, zip_name, destination=self.source_folder, strip_root=True)
         os.unlink(zip_name)
 
 
+    def generate(self):
+        # Set platform-specific compiler flags
+        env = Environment()
+        if self.settings.compiler == "gcc" and self.settings.compiler.libcxx == "libstdc++11":
+            env.define("CXXFLAGS", "-D_GLIBCXX_USE_CXX11_ABI=1")
+        
+        # Add compiler flags to ensure standard headers are available globally
+        # This addresses missing uint32_t, int32_t, numeric_limits etc. in xlnt source without modifying upstream files
+        env.append("CXXFLAGS", "-include cstdint")
+        env.append("CXXFLAGS", "-include limits")
+        
+        # Disable specific warnings that cause build failures in xlnt source
+        env.append("CXXFLAGS", "-Wno-dangling-reference")
+        env.append("CXXFLAGS", "-Wno-error=dangling-reference")
+        env.vars(self).save_script("conanenv")
+
     def build(self):
         cmake = CMake(self)
+        static_flag = "ON" if not self.options.shared else "OFF"
+        variables = {"STATIC": static_flag}
         if self.settings.build_type == "Debug": 
-            cmake.definitions["CUSTOM_DEBUG_POSTFIX"] = self.settings.build_type
-        cmake.definitions["CMAKE_CXX_FLAGS"] = "-D_GLIBCXX_USE_CXX11_ABI=1"
-        for option_name in self.options.values.fields:
-            activated = getattr(self.options, option_name)
-            if option_name == "shared":
-                cmake.definitions["STATIC"] = "OFF" if activated else "ON"
-        self.output.info(cmake.definitions)
-        cmake.configure(source_folder="xlnt")
+            variables["CUSTOM_DEBUG_POSTFIX"] = "d"
+        cmake.configure(variables=variables)
         cmake.build()
 
     def package(self):
-        self.copy("*.hpp", dst="include/xlnt",src="xlnt/include/xlnt")
-        self.copy("*.lib", dst="lib", keep_path=False)
-        self.copy("*.dll", dst="bin", keep_path=False)
-        self.copy("*.so", dst="lib", keep_path=False)
-        self.copy("*.dylib", dst="lib", keep_path=False)
-        self.copy("*.a", dst="lib", keep_path=False)
-        self.copy("*.so", dst="lib", keep_path=False)
+        copy(self, "*.hpp", dst=os.path.join(self.package_folder, "include"), src=os.path.join(self.source_folder, "include"))
+        copy(self, "*.lib", dst=os.path.join(self.package_folder, "lib"), src=self.build_folder, keep_path=False)
+        copy(self, "*.dll", dst=os.path.join(self.package_folder, "bin"), src=self.build_folder, keep_path=False)
+        copy(self, "*.so", dst=os.path.join(self.package_folder, "lib"), src=self.build_folder, keep_path=False)
+        copy(self, "*.dylib", dst=os.path.join(self.package_folder, "lib"), src=self.build_folder, keep_path=False)
+        copy(self, "*.a", dst=os.path.join(self.package_folder, "lib"), src=self.build_folder, keep_path=False)
 
     def package_info(self):
         self.cpp_info.libs = ["xlnt" if self.settings.build_type == "Release" else "xlntd"]
+        self.cpp_info.set_property("cmake_file_name", "xlnt")
+        self.cpp_info.set_property("cmake_target_name", "xlnt::xlnt")

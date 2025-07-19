@@ -1,0 +1,1 @@
+. "/home/ahamed/workspace/conan-xlnt/test_package/build/gcc-13-x86_64-14-release/generators/deactivate_conanrunenv-release-x86_64.sh"

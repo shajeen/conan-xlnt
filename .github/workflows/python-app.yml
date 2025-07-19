@@ -5,9 +5,8 @@ name: Python application
 
 on:
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    tags:
+      - 'v*.*.*'
 
 jobs:
   build:
@@ -25,7 +24,42 @@ jobs:
         python -m pip install --upgrade pip
         pip install conan
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Install conan package
+    - name: Extract version from tag
+      id: get_version
+      run: echo "::set-output name=VERSION::${GITHUB_REF#refs/tags/v}"
+    - name: Configure Conan remote and user
       run: |
-        conan remote add shajeen https://api.bintray.com/conan/shajeenahmed/conan 
-        conan install xlnt/1.3.0@master/release --build=missing
+        conan remote add shajeen https://api.bintray.com/conan/shajeenahmed/conan
+        conan user ${CONAN_USERNAME} -p ${CONAN_PASSWORD} -r shajeen
+      env:
+        CONAN_USERNAME: ${{ secrets.CONAN_USERNAME }}
+        CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
+    - name: Create Conan package
+      run: |
+        conan create . --build=missing
+    - name: Export Conan package
+      run: |
+        conan export-pkg . xlnt/${{ steps.get_version.outputs.VERSION }}@ --force -o shared=False
+    - name: Zip Conan package
+      run: |
+        PACKAGE_PATH=$(conan cache path xlnt/${{ steps.get_version.outputs.VERSION }}@)
+        zip -r xlnt-${{ steps.get_version.outputs.VERSION }}.zip $PACKAGE_PATH
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.get_version.outputs.VERSION }}
+        release_name: Release v${{ steps.get_version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./xlnt-${{ steps.get_version.outputs.VERSION }}.zip
+        asset_name: xlnt-${{ steps.get_version.outputs.VERSION }}.zip
+        asset_content_type: application/zip
