@@ -1,7 +1,6 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.15)
 project(cmake_wrapper)
 
-include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-conan_basic_setup()
+find_package(xlnt REQUIRED)
 
-add_subdirectory("source_subfolder")
+# CMake wrapper for Conan package - no subdirectory needed
