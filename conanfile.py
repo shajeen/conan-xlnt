@@ -26,7 +26,7 @@ class XlntConan(ConanFile):
                     self.version = tag[1:]  # Remove 'v' prefix
                 else:
                     self.version = tag
-            except:
+            except RuntimeError:
                 # Fallback to default version if no tag found
                 self.version = "1.5.0"
 
