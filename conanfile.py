@@ -25,7 +25,6 @@ class XlntConan(ConanFile):
                 else:
                     self.version = conan_version
             else:
-                # Fallback to default version if CONAN_VERSION not found
                 self.version = "1.5.0"
 
     def layout(self):
@@ -38,25 +37,18 @@ class XlntConan(ConanFile):
         unzip(self, zip_name, destination=self.source_folder, strip_root=True)
         os.unlink(zip_name)
 
-
     def generate(self):
-        # Set platform-specific compiler flags
         env = Environment()
         if self.settings.compiler == "gcc" and self.settings.compiler.libcxx == "libstdc++11":
             env.define("CXXFLAGS", "-D_GLIBCXX_USE_CXX11_ABI=1")
-        
-        # Add compiler flags to ensure standard headers are available globally
-        # This addresses missing uint32_t, int32_t, numeric_limits etc. in xlnt source without modifying upstream files
         env.append("CXXFLAGS", "-include cstdint")
         env.append("CXXFLAGS", "-include limits")
-        
-        # Disable specific warnings that cause build failures in xlnt source
         env.append("CXXFLAGS", "-Wno-dangling-reference")
         env.append("CXXFLAGS", "-Wno-error=dangling-reference")
         env.vars(self).save_script("conanenv")
 
     def build(self):
-        self.cmake = CMake(self)
+        cmake = CMake(self)
         static_flag = "ON" if not self.options.shared else "OFF"
         variables = {"STATIC": static_flag}
         if self.settings.build_type == "Debug": 
@@ -65,7 +57,8 @@ class XlntConan(ConanFile):
         cmake.build()
 
     def package(self):
-        self.cmake.install()
+        cmake = CMake(self)
+        cmake.install()
 
     def package_info(self):
         self.cpp_info.libs = ["xlnt" if self.settings.build_type == "Release" else "xlntd"]
