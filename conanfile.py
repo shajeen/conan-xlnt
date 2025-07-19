@@ -18,16 +18,14 @@ class XlntConan(ConanFile):
 
     def set_version(self):
         if not hasattr(self, 'version') or not self.version:
-            git = Git(self, folder=self.recipe_folder)
-            try:
-                # Try to get version from git tag
-                tag = git.run("describe --tags --exact-match HEAD").strip()
-                if tag.startswith('v'):
-                    self.version = tag[1:]  # Remove 'v' prefix
+            conan_version = os.environ.get("CONAN_VERSION")
+            if conan_version:
+                if conan_version.startswith('v'):
+                    self.version = conan_version[1:]  # Remove 'v' prefix
                 else:
-                    self.version = tag
-            except RuntimeError:
-                # Fallback to default version if no tag found
+                    self.version = conan_version
+            else:
+                # Fallback to default version if CONAN_VERSION not found
                 self.version = "1.5.0"
 
     def layout(self):
