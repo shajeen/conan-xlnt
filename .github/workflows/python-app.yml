@@ -1,13 +1,30 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
 name: Python application
-
 on:
+  # Trigger on tag push (original behavior)
   push:
     tags:
       - 'v*.*.*'
-
+  
+  # Manual trigger button with optional inputs
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.5.0)'
+        required: true
+        default: '1.5.0'
+        type: string
+      create_release:
+        description: 'Create GitHub release'
+        required: false
+        default: true
+        type: boolean
+      run_tests:
+        description: 'Run tests before building'
+        required: false
+        default: false
+        type: boolean
 jobs:
   build:
     strategy:
@@ -17,50 +34,130 @@ jobs:
         include:
           - os: ubuntu-latest
             conan_profile: default
-
     runs-on: ${{ matrix.os }}
-
     steps:
     - uses: actions/checkout@v4
+      with:
+        # Fetch full history for proper git operations
+        fetch-depth: 0
+        # Use a token with write permissions for commits
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
     - name: Set up Python 3.9
       uses: actions/setup-python@v4
       with:
         python-version: 3.9
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install conan
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Extract version from tag
+    
+    # Fixed: Handle both tag-based and manual triggers
+    - name: Extract version
       id: get_version
-      run: echo "::set-output name=VERSION::${GITHUB_REF#refs/tags/v}"
+      run: |
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          # Manual trigger - use input version
+          VERSION="${{ github.event.inputs.version }}"
+          echo "Using manual version: $VERSION"
+        else
+          # Tag trigger - extract from tag
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Using tag version: $VERSION"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+    
     - name: Update README.md with new version
       run: |
-        VERSION=${{ steps.get_version.outputs.VERSION }}
+        # Use the environment variable set in previous step
         sed -i "s/xlnt\/[0-9]\+\.[0-9]\+\.[0-9]\+/xlnt\/${VERSION}/g" README.md
+    
     - name: Commit updated README.md
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add README.md
-        git commit -m "docs: Update version to ${{ env.VERSION }} in README.md" || exit 0
+        # Check if there are changes before committing
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "docs: Update version to ${VERSION} in README.md"
+        fi
+    
+    # Fixed: Ensure Conan profile is properly configured
+    - name: Setup Conan profile
+      run: |
+        conan profile detect --force
+        conan profile show default
+    
+    # Optional: Run tests if requested (only for manual triggers)
+    - name: Run tests
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_tests == 'true'
+      run: |
+        echo "Running tests..."
+        # Add your test commands here, for example:
+        # python -m pytest tests/
+        # Or if you have CMake tests:
+        # conan create . --build=missing --test-folder=test_package
+    
     - name: Create Conan package
       run: |
-        conan profile detect
-        conan create . --build=missing
+        # Add verbose output to help debug issues
+        conan create . --build=missing -v
+    
     - name: Export Conan package
       run: |
         conan export-pkg . -o shared=False
+    
+    # Fixed: Correct environment variable usage and improved error handling
     - name: Create package archive
       run: |
-        VERSION=${{ steps.get_version.outputs.VERSION }}
-        PACKAGE_PATH=$(conan cache path xlnt/${{ env.VERSION }}@)
-        if [ "${{ runner.os }}" == "Windows" ]; then
-          7z a xlnt-${{ env.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip $PACKAGE_PATH
-        else
-          zip -r xlnt-${{ env.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip $PACKAGE_PATH
+        # Get the package path using conan cache path command
+        PACKAGE_PATH=$(conan cache path "xlnt/${VERSION}")
+        
+        if [ ! -d "$PACKAGE_PATH" ]; then
+          echo "Error: Package path not found: $PACKAGE_PATH"
+          exit 1
         fi
+        
+        ARCHIVE_NAME="xlnt-${VERSION}-${{ runner.os }}-${{ matrix.arch }}.zip"
+        
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          7z a "$ARCHIVE_NAME" "$PACKAGE_PATH"
+        else
+          zip -r "$ARCHIVE_NAME" "$PACKAGE_PATH"
+        fi
+        
+        # Verify archive was created
+        if [ ! -f "$ARCHIVE_NAME" ]; then
+          echo "Error: Failed to create archive: $ARCHIVE_NAME"
+          exit 1
+        fi
+        
+        echo "Created archive: $ARCHIVE_NAME"
+        ls -la "$ARCHIVE_NAME"
+    
+    # Debug: Show build summary
+    - name: Build Summary
+      run: |
+        echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Trigger Type:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version:** ${{ env.VERSION }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **OS:** ${{ runner.os }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Architecture:** ${{ matrix.arch }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Conan Profile:** ${{ matrix.conan_profile }}" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "- **Run Tests:** ${{ github.event.inputs.run_tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Create Release:** ${{ github.event.inputs.create_release }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "- **Package:** xlnt-${{ env.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip" >> $GITHUB_STEP_SUMMARY
+    
+    # Conditional: Upload to GitHub Release (always for tags, optional for manual)
     - name: Upload to GitHub Release
+      if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
       uses: softprops/action-gh-release@v1
       with:
         files: xlnt-${{ env.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip
@@ -68,5 +165,16 @@ jobs:
         name: Release v${{ env.VERSION }}
         draft: false
         prerelease: false
+        body: |
+          ## Release v${{ env.VERSION }}
+          
+          **Trigger:** ${{ github.event_name == 'push' && 'Automatic (tag push)' || 'Manual' }}
+          **Build Date:** ${{ github.run_id }}
+          
+          ### Changes
+          - Built from ${{ github.event_name == 'push' && github.ref || 'manual trigger' }}
+          
+          ### Artifacts
+          - xlnt-${{ env.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
