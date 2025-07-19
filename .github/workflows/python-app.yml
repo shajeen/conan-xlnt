@@ -54,18 +54,18 @@ jobs:
     - name: Create package archive
       run: |
         VERSION=${{ steps.get_version.outputs.VERSION }}
-        PACKAGE_PATH=$(conan cache path xlnt/${VERSION}@)
+        PACKAGE_PATH=$(conan cache path xlnt/${{ env.VERSION }}@)
         if [ "${{ runner.os }}" == "Windows" ]; then
-          7z a xlnt-${VERSION}-${{ runner.os }}-${{ matrix.arch }}.zip $PACKAGE_PATH
+          7z a xlnt-${{ env.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip $PACKAGE_PATH
         else
-          zip -r xlnt-${VERSION}-${{ runner.os }}-${{ matrix.arch }}.zip $PACKAGE_PATH
+          zip -r xlnt-${{ env.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip $PACKAGE_PATH
         fi
     - name: Upload to GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        files: xlnt-${{ steps.get_version.outputs.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip
-        tag_name: v${{ steps.get_version.outputs.VERSION }}
-        name: Release v${{ steps.get_version.outputs.VERSION }}
+        files: xlnt-${{ env.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip
+        tag_name: v${{ env.VERSION }}
+        name: Release v${{ env.VERSION }}
         draft: false
         prerelease: false
       env:
