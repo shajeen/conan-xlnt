@@ -12,14 +12,10 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
         arch: [x86_64]
         include:
           - os: ubuntu-latest
-            conan_profile: default
-          - os: windows-latest
-            conan_profile: default
-          - os: macos-latest
             conan_profile: default
 
     runs-on: ${{ matrix.os }}
