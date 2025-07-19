@@ -1,0 +1,7 @@
+fix: Use cmake.install() in package() method
+
+Replaced manual file copying in the `package()` method of `conanfile.py`
+with `cmake.install()`. This leverages CMake's built-in install rules
+for the xlnt library, ensuring that the library files are correctly
+placed in the Conan package, which should resolve the 'Library not found'
+error during the test_package build.
