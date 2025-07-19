@@ -118,10 +118,27 @@ jobs:
         echo "=== Current directory contents ==="
         ls -la
         
-        # Check if conanfile.py exists
+        # Check if conanfile.py exists and show full content for debugging
         if [ -f "conanfile.py" ]; then
           echo "=== conanfile.py found ==="
-          head -20 conanfile.py
+          echo "=== FULL conanfile.py content (for debugging) ==="
+          cat conanfile.py
+          echo "=== END of conanfile.py ==="
+          
+          # Auto-fix common cmake issues
+          echo "=== Auto-fixing cmake issues ==="
+          if grep -q "def build" conanfile.py && ! grep -q "cmake = CMake(self)" conanfile.py; then
+            echo "Found build() method without cmake object creation - applying auto-fix"
+            cp conanfile.py conanfile.py.backup
+            
+            # Add cmake = CMake(self) after def build method
+            sed -i '/def build.*:/a\        cmake = CMake(self)' conanfile.py
+            
+            echo "=== Applied auto-fix, new build method looks like: ==="
+            grep -A 10 "def build" conanfile.py
+          else
+            echo "No auto-fix needed or cmake object already exists"
+          fi
         else
           echo "ERROR: conanfile.py not found!"
           exit 1
@@ -131,8 +148,13 @@ jobs:
         echo "=== Creating Conan package ==="
         conan create . --build=missing -v || {
           echo "ERROR: Conan create failed"
+          echo "=== Build method analysis ==="
+          echo "Looking for build() method issues..."
+          grep -n "def build" conanfile.py || echo "No build method found"
+          grep -n "cmake\." conanfile.py || echo "No cmake calls found"
+          grep -n "cmake =" conanfile.py || echo "No cmake object creation found"
           echo "=== Conan cache info ==="
-          conan cache path . || echo "Cache path command failed"
+          conan cache path "xlnt" || echo "Cache path command failed"
           exit 1
         }
     
