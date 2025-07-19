@@ -46,6 +46,7 @@ jobs:
         git commit -m "docs: Update version to ${{ env.VERSION }} in README.md" || exit 0
     - name: Create Conan package
       run: |
+        conan profile detect
         conan create . --build=missing
     - name: Export Conan package
       run: |
