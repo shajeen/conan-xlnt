@@ -56,7 +56,7 @@ class XlntConan(ConanFile):
         env.vars(self).save_script("conanenv")
 
     def build(self):
-        cmake = CMake(self)
+        self.cmake = CMake(self)
         static_flag = "ON" if not self.options.shared else "OFF"
         variables = {"STATIC": static_flag}
         if self.settings.build_type == "Debug": 
@@ -65,7 +65,7 @@ class XlntConan(ConanFile):
         cmake.build()
 
     def package(self):
-        cmake.install()
+        self.cmake.install()
 
     def package_info(self):
         self.cpp_info.libs = ["xlnt" if self.settings.build_type == "Release" else "xlntd"]

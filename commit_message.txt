@@ -1,7 +1,7 @@
-fix: Use cmake.install() in package() method
+fix: Resolve NameError for cmake in package() method
 
-Replaced manual file copying in the `package()` method of `conanfile.py`
-with `cmake.install()`. This leverages CMake's built-in install rules
-for the xlnt library, ensuring that the library files are correctly
-placed in the Conan package, which should resolve the 'Library not found'
-error during the test_package build.
+Moved the initialization of the CMake object to `self.cmake` in the
+`build()` method and updated the `package()` method to use `self.cmake.install()`.
+This ensures that the `cmake` object is properly defined and accessible
+within the `package()` method, resolving the `NameError` encountered
+during the Conan package creation.
