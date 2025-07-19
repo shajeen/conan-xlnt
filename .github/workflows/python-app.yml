@@ -10,15 +10,26 @@ on:
 
 jobs:
   build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        arch: [x86_64]
+        include:
+          - os: ubuntu-latest
+            conan_profile: default
+          - os: windows-latest
+            conan_profile: default
+          - os: macos-latest
+            conan_profile: default
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.9
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -27,39 +38,39 @@ jobs:
     - name: Extract version from tag
       id: get_version
       run: echo "::set-output name=VERSION::${GITHUB_REF#refs/tags/v}"
-    - name: Configure Conan remote and user
+    - name: Update README.md with new version
       run: |
-        conan remote add shajeen https://api.bintray.com/conan/shajeenahmed/conan
-        conan user ${CONAN_USERNAME} -p ${CONAN_PASSWORD} -r shajeen
-      env:
-        CONAN_USERNAME: ${{ secrets.CONAN_USERNAME }}
-        CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
+        VERSION=${{ steps.get_version.outputs.VERSION }}
+        sed -i "s/xlnt\/[0-9]\+\.[0-9]\+\.[0-9]\+/xlnt\/${VERSION}/g" README.md
+    - name: Commit updated README.md
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        git commit -m "docs: Update version to ${{ steps.get_version.outputs.VERSION }} in README.md" || exit 0
+        git push
     - name: Create Conan package
       run: |
         conan create . --build=missing
     - name: Export Conan package
       run: |
-        conan export-pkg . xlnt/${{ steps.get_version.outputs.VERSION }}@ --force -o shared=False
-    - name: Zip Conan package
+        conan export-pkg . --force -o shared=False
+    - name: Create package archive
       run: |
-        PACKAGE_PATH=$(conan cache path xlnt/${{ steps.get_version.outputs.VERSION }}@)
-        zip -r xlnt-${{ steps.get_version.outputs.VERSION }}.zip $PACKAGE_PATH
-    - name: Create GitHub Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VERSION=${{ steps.get_version.outputs.VERSION }}
+        PACKAGE_PATH=$(conan cache path xlnt/${VERSION}@)
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          7z a xlnt-${VERSION}-${{ runner.os }}-${{ matrix.arch }}.zip $PACKAGE_PATH
+        else
+          zip -r xlnt-${VERSION}-${{ runner.os }}-${{ matrix.arch }}.zip $PACKAGE_PATH
+        fi
+    - name: Upload to GitHub Release
+      uses: softprops/action-gh-release@v1
       with:
+        files: xlnt-${{ steps.get_version.outputs.VERSION }}-${{ runner.os }}-${{ matrix.arch }}.zip
         tag_name: v${{ steps.get_version.outputs.VERSION }}
-        release_name: Release v${{ steps.get_version.outputs.VERSION }}
+        name: Release v${{ steps.get_version.outputs.VERSION }}
         draft: false
         prerelease: false
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./xlnt-${{ steps.get_version.outputs.VERSION }}.zip
-        asset_name: xlnt-${{ steps.get_version.outputs.VERSION }}.zip
-        asset_content_type: application/zip

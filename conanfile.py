@@ -4,10 +4,10 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, cmake_layout
 from conan.tools.files import download, unzip, copy, rmdir, replace_in_file
 from conan.tools.env import Environment
+from conan.tools.scm import Git
 
 class XlntConan(ConanFile):
     name = "xlnt"
-    version = "1.5.0"
     license = "MIT license"
     description = "xlnt is a modern C++ library for manipulating spreadsheets in memory and reading/writing them from/to XLSX files"
     url = "https://github.com/tfussell/xlnt"
@@ -15,6 +15,20 @@ class XlntConan(ConanFile):
     options = {"shared": [True, False]}
     default_options = {"shared": False}
     generators = "CMakeDeps", "CMakeToolchain"
+
+    def set_version(self):
+        if not hasattr(self, 'version') or not self.version:
+            git = Git(self, folder=self.recipe_folder)
+            try:
+                # Try to get version from git tag
+                tag = git.run("describe --tags --exact-match HEAD").strip()
+                if tag.startswith('v'):
+                    self.version = tag[1:]  # Remove 'v' prefix
+                else:
+                    self.version = tag
+            except:
+                # Fallback to default version if no tag found
+                self.version = "1.5.0"
 
     def layout(self):
         cmake_layout(self)
