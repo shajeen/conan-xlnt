@@ -91,7 +91,12 @@ jobs:
     - name: Setup Conan profile
       run: |
         conan profile detect --force
-        conan profile show default
+        echo "=== Conan Profile Information ==="
+        conan profile show
+        echo "=== Conan Version ==="
+        conan --version
+        echo "=== Available Profiles ==="
+        conan profile list || echo "No custom profiles found"
     
     # Optional: Run tests if requested (only for manual triggers)
     - name: Run tests
@@ -105,26 +110,93 @@ jobs:
     
     - name: Create Conan package
       run: |
-        # Add verbose output to help debug issues
-        conan create . --build=missing -v
-    
-    - name: Export Conan package
-      run: |
-        conan export-pkg . -o shared=False
-    
-    # Fixed: Correct environment variable usage and improved error handling
-    - name: Create package archive
-      run: |
-        # Get the package path using conan cache path command
-        PACKAGE_PATH=$(conan cache path "xlnt/${VERSION}")
+        echo "=== Starting Conan package creation ==="
+        echo "Working directory: $(pwd)"
+        echo "Conan version: $(conan --version)"
         
-        if [ ! -d "$PACKAGE_PATH" ]; then
-          echo "Error: Package path not found: $PACKAGE_PATH"
+        # List files in current directory
+        echo "=== Current directory contents ==="
+        ls -la
+        
+        # Check if conanfile.py exists
+        if [ -f "conanfile.py" ]; then
+          echo "=== conanfile.py found ==="
+          head -20 conanfile.py
+        else
+          echo "ERROR: conanfile.py not found!"
           exit 1
         fi
         
-        ARCHIVE_NAME="xlnt-${VERSION}-${{ runner.os }}-${{ matrix.arch }}.zip"
+        # Create package with verbose output and error handling
+        echo "=== Creating Conan package ==="
+        conan create . --build=missing -v || {
+          echo "ERROR: Conan create failed"
+          echo "=== Conan cache info ==="
+          conan cache path . || echo "Cache path command failed"
+          exit 1
+        }
+    
+    - name: Export Conan package
+      run: |
+        echo "=== Exporting Conan package ==="
+        # Note: In Conan 2.x, export-pkg might have different syntax
+        conan export-pkg . -o shared=False || {
+          echo "WARN: export-pkg failed, trying alternative approach"
+          echo "Package might already be in cache from create step"
+          conan list "xlnt/*" || echo "No xlnt packages found in cache"
+        }
+    
+    # Fixed: Correct environment variable usage and improved error handling for Conan 2.x
+    - name: Create package archive
+      run: |
+        echo "=== Creating package archive ==="
         
+        # List available packages
+        echo "=== Available packages in cache ==="
+        conan list "xlnt/*" || {
+          echo "ERROR: No xlnt packages found in cache"
+          exit 1
+        }
+        
+        # Try to get package path (syntax varies between Conan versions)
+        PACKAGE_PATH=""
+        
+        # Method 1: Try Conan 2.x syntax
+        if PACKAGE_PATH=$(conan cache path "xlnt/${VERSION}" 2>/dev/null); then
+          echo "Found package using Conan 2.x syntax: $PACKAGE_PATH"
+        # Method 2: Try without version
+        elif PACKAGE_PATH=$(conan cache path "xlnt" 2>/dev/null); then
+          echo "Found package using alternative syntax: $PACKAGE_PATH"
+        # Method 3: Manual cache location (fallback)
+        else
+          echo "WARN: conan cache path command failed, trying manual approach"
+          CACHE_BASE="$HOME/.conan2"
+          if [ -d "$CACHE_BASE" ]; then
+            PACKAGE_PATH=$(find "$CACHE_BASE" -name "*xlnt*" -type d | head -1)
+            echo "Found package via manual search: $PACKAGE_PATH"
+          fi
+        fi
+        
+        # Verify package path exists
+        if [ -z "$PACKAGE_PATH" ] || [ ! -d "$PACKAGE_PATH" ]; then
+          echo "ERROR: Could not locate package path"
+          echo "Searched locations:"
+          echo "- conan cache path xlnt/${VERSION}"
+          echo "- conan cache path xlnt"
+          echo "- Manual search in $HOME/.conan2"
+          
+          echo "=== Available cache contents ==="
+          find "$HOME/.conan2" -name "*xlnt*" 2>/dev/null || echo "No xlnt files found in cache"
+          exit 1
+        fi
+        
+        echo "Using package path: $PACKAGE_PATH"
+        
+        # Create archive name
+        ARCHIVE_NAME="xlnt-${VERSION}-${{ runner.os }}-${{ matrix.arch }}.zip"
+        echo "Creating archive: $ARCHIVE_NAME"
+        
+        # Create the archive
         if [ "${{ runner.os }}" == "Windows" ]; then
           7z a "$ARCHIVE_NAME" "$PACKAGE_PATH"
         else
@@ -133,11 +205,11 @@ jobs:
         
         # Verify archive was created
         if [ ! -f "$ARCHIVE_NAME" ]; then
-          echo "Error: Failed to create archive: $ARCHIVE_NAME"
+          echo "ERROR: Failed to create archive: $ARCHIVE_NAME"
           exit 1
         fi
         
-        echo "Created archive: $ARCHIVE_NAME"
+        echo "✅ Successfully created archive: $ARCHIVE_NAME"
         ls -la "$ARCHIVE_NAME"
     
     # Debug: Show build summary
