@@ -1,6 +1,6 @@
 # conan-xlnt
 
-![build](https://github.com/CodeAvailable/conan-xlnt/workflows/Python%20application/badge.svg?branch=master)
+[![CI](https://github.com/shajeen/conan-xlnt/actions/workflows/python-app.yml/badge.svg)](https://github.com/shajeen/conan-xlnt/actions/workflows/python-app.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A Conan wrapper for the `xlnt` library, providing a convenient way to integrate `xlnt` into your C++ projects.
