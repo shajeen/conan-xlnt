@@ -1,7 +1,0 @@
-fix: Resolve NameError for cmake in package() method
-
-Moved the initialization of the CMake object to `self.cmake` in the
-`build()` method and updated the `package()` method to use `self.cmake.install()`.
-This ensures that the `cmake` object is properly defined and accessible
-within the `package()` method, resolving the `NameError` encountered
-during the Conan package creation.
